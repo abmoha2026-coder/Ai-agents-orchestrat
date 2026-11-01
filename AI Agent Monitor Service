@@ -1,0 +1,107 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.ServiceProcess;
+using System.Timers;
+
+namespace AIAgentMonitorService
+{
+    public class AIAgentMonitor : ServiceBase
+    {
+        private Timer _monitorTimer;
+        private PerformanceCounter _memoryCounter;
+        private string _offloadDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AIAgentOffload");
+        private int _memoryThresholdMB = 1024; // 1GB threshold
+        private int _monitorIntervalMs = 5000; // 5 seconds
+
+        public AIAgentMonitor()
+        {
+            this.ServiceName = "AIAgentMonitorService";
+            this.EventLog.Log = "Application";
+
+            // Set up memory counter
+            _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+
+            // Create offload directory if it doesn't exist
+            Directory.CreateDirectory(_offloadDirectory);
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            _monitorTimer = new Timer(_monitorIntervalMs);
+            _monitorTimer.Elapsed += MonitorMemoryUsage;
+            _monitorTimer.Start();
+            EventLog.WriteEntry("AIAgentMonitor service started", EventLogEntryType.Information);
+        }
+
+        protected override void OnStop()
+        {
+            _monitorTimer?.Stop();
+            _monitorTimer?.Dispose();
+            EventLog.WriteEntry("AIAgentMonitor service stopped", EventLogEntryType.Information);
+        }
+
+        private void MonitorMemoryUsage(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                float availableMemoryMB = _memoryCounter.NextValue();
+                float usedMemoryMB = GC.GetTotalMemory(false) / (1024 * 1024);
+
+                EventLog.WriteEntry($"Memory Status - Available: {availableMemoryMB:F2}MB, Used: {usedMemoryMB:F2}MB",
+                    EventLogEntryType.Information);
+
+                if (usedMemoryMB > _memoryThresholdMB)
+                {
+                    EventLog.WriteEntry($"Memory threshold exceeded ({usedMemoryMB:F2}MB > {_memoryThresholdMB}MB). Offloading data...",
+                        EventLogEntryType.Warning);
+
+                    OffloadData();
+                    RestartAgent();
+                }
+            }
+            catch (Exception ex)
+            {
+                EventLog.WriteEntry($"Error monitoring memory: {ex.Message}", EventLogEntryType.Error);
+            }
+        }
+
+        private void OffloadData()
+        {
+            try
+            {
+                // Example: Save large data structures to disk
+                string offloadFile = Path.Combine(_offloadDirectory, $"offload_{DateTime.Now:yyyyMMdd_HHmmss}.dat");
+
+                // In a real implementation, you would serialize actual agent data here
+                File.WriteAllText(offloadFile, "Simulated agent data offloaded to disk");
+
+                EventLog.WriteEntry($"Data offloaded to {offloadFile}", EventLogEntryType.Information);
+            }
+            catch (Exception ex)
+            {
+                EventLog.WriteEntry($"Failed to offload data: {ex.Message}", EventLogEntryType.Error);
+            }
+        }
+
+        private void RestartAgent()
+        {
+            try
+            {
+                // In a real implementation, you would implement proper agent restart logic
+                EventLog.WriteEntry("Agent restart initiated", EventLogEntryType.Information);
+
+                // Example: Process.Start("restart_agent_script.bat");
+            }
+            catch (Exception ex)
+            {
+                EventLog.WriteEntry($"Failed to restart agent: {ex.Message}", EventLogEntryType.Error);
+            }
+        }
+
+        public static void Main()
+        {
+            ServiceBase.Run(new AIAgentMonitor());
+        }
+    }
+}
