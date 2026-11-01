@@ -1,0 +1,9 @@
+# installation guide
+
+To implement this service:
+
+Create a new Windows Service project in Visual Studio
+Add the above code
+Install the service using:
+
+
