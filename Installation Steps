@@ -1,0 +1,25 @@
+Download the latest release from GitHub Releases.
+Extract the ZIP file to a folder (e.g., C:\AIAgentMonitorService).
+Open Command Prompt as Administrator and run:
+cmd
+
+
+sc create 
+AIAgentMonitorService binPath= "C:\AIAgentMonitorService\AIAgentMonitorService.exe" start= a
+uto
+
+start the server
+sc start AIAgentMonitorService
+
+uninstall the server
+
+stop the server
+
+sc stop AIAgentMonitorService
+
+delete the server
+sc delete AIAgentMonitorService
+
+optional
+git clone https://github.com/yourusername/AIAgentMonitorService.git
+cd AIAgentMonitorService
