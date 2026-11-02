@@ -1,9 +1,1 @@
-
-# AI Agent Lifeguard: Prevent Crashes with Smart Memory Control
-
-Features: 
-Monitors system memory usage
-Offloads data to disk when memory threshold is exceeded
-Logs all operations to Windows Event Log
-Lightweight implementation with minimal overhead
-Configurable thresholds and intervals
+A lightweight Windows service that acts as a lifeguard for AI agents—monitoring memory usage, offloading data to disk when limits are exceeded, and automatically restarting unresponsive agents to keep your AI infrastructure running smoothly."
