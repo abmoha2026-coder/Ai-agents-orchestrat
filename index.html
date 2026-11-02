@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f1">
+  <title>Conductor | Agent Operations</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      color-scheme: light;
+      --paper: #f3f5f1;
+      --surface: #fff;
+      --ink: #202820;
+      --line: #e5e9e3;
+      --green: #237b53;
+      --green-soft: #e8f4ec;
+      --orange: #bf6738;
+      --orange-soft: #fbefe8;
+      --blue: #38738c;
+      --blue-soft: #e8f1f5;
+      --red: #b9534b;
+      --sidebar: #202b25;
+      --sidebar-muted: #9caaa0;
+      --mono: 'DM Mono', 'SFMono-Regular', Consolas, monospace;
+      --body: 'DM Sans', 'Segoe UI', sans-serif;
+      --display: 'Manrope', 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 13px; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #4f9a70; outline-offset: 2px; }
+    .app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 22px 14px 16px; background: var(--sidebar); color: #f3f6f1; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 9px 28px; font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: 0; }
+    .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 8px; background: #d3ef7d; color: #263126; font-size: 17px; font-weight: 800; }
+    .brand small { display: block; margin-top: 2px; color: #aab8ad; font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: 0; }
+    .nav-label { padding: 13px 10px 8px; color: #84948a; font-family: var(--mono); font-size: 9px; letter-spacing: 1.1px; text-transform: uppercase; }
+    .nav { display: grid; gap: 4px; }
+    .nav a { display: flex; align-items: center; gap: 11px; min-height: 38px; padding: 0 11px; border-radius: 5px; color: var(--sidebar-muted); text-decoration: none; transition: background .16s, color .16s; }
+    .nav a:hover { background: #2b3830; color: #fff; }
+    .nav a.active { background: #34443a; color: #f4f8e9; }
+    .nav-icon { display: grid; width: 17px; place-items: center; color: #a3b2a7; font-size: 16px; }
+    .nav a.active .nav-icon { color: #d3ef7d; }
+    .nav-count { margin-left: auto; color: #a8b7ac; font-family: var(--mono); font-size: 10px; }
+    .sidebar-spacer { flex: 1; }
+    .workspace-card { padding: 13px 11px; border: 1px solid #3a4840; border-radius: 6px; background: #26322b; }
+    .workspace-card .eyebrow { color: #a2b3a5; }
+    .workspace-title { margin: 8px 0 4px; font-size: 12px; font-weight: 600; }
+    .workspace-foot { color: #a2b3a5; font-size: 11px; }
+    .workspace-foot strong { color: #d3ef7d; font-weight: 500; }
+    .account { display: flex; align-items: center; gap: 10px; padding: 16px 8px 0; }
+    .avatar { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #d9e7d8; color: #35523d; font-size: 10px; font-weight: 700; }
+    .account-name { font-size: 11px; font-weight: 600; }
+    .account-role { margin-top: 2px; color: #9caaa0; font-size: 10px; }
+    .main { min-width: 0; }
+    .topbar { position: sticky; z-index: 3; top: 0; display: flex; height: 61px; align-items: center; justify-content: space-between; gap: 16px; padding: 0 32px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.92); backdrop-filter: blur(12px); }
+    .breadcrumb { color: var(--muted); font-size: 12px; }
+    .breadcrumb strong { color: var(--ink); font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 16px; }
+    .search-wrap { position: relative; }
+    .search-wrap span { position: absolute; top: 8px; left: 10px; color: #909890; }
+    .search { width: 210px; height: 32px; padding: 0 10px 0 31px; border: 1px solid var(--line); border-radius: 5px; background: #fafbf9; color: var(--ink); font-size: 11px; }
+    .top-meta { color: var(--muted); font-family: var(--mono); font-size: 10px; white-space: nowrap; }
+    .content { width: min(1470px, 100%); margin: 0 auto; padding: 28px 32px 48px; }
+    .demo-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; padding: 9px 12px; border: 1px solid #dfe9d5; border-radius: 5px; background: #eff5e9; color: #536147; font-size: 11px; }
+    .demo-label { display: flex; align-items: center; gap: 8px; }
+    .demo-label strong { color: #34472f; font-weight: 700; }
+    .demo-dot, .status-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #61a76e; }
+    .demo-note { color: #6d7865; }
+    .heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .eyebrow { color: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    h1 { margin: 5px 0 5px; font-family: var(--display); font-size: 25px; font-weight: 700; letter-spacing: 0; }
+    .subtitle { color: var(--muted); font-size: 12px; }
+    .heading-actions { display: flex; gap: 8px; }
+    .button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: #354038; font-size: 11px; font-weight: 600; transition: background .15s, border-color .15s, transform .15s; }
+    .button:hover { border-color: #b9c5ba; background: #f8faf7; }
+    .button:active { transform: translateY(1px); }
+    .button.primary { border-color: #2b6f4a; background: #2b6f4a; color: #fff; }
+    .button.primary:hover { border-color: #225c3c; background: #225c3c; }
+    .button.danger { color: var(--red); }
+    .button.small { min-height: 28px; padding: 0 9px; font-size: 10px; }
+    .button[disabled] { cursor: not-allowed; opacity: .48; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 19px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+    .metric { min-width: 0; padding: 15px 17px 14px; }
+    .metric + .metric { border-left: 1px solid var(--line); }
+    .metric-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 10px; }
+    .metric-value { margin-top: 9px; font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: 0; line-height: 1; }
+    .metric-sub { margin-top: 6px; color: var(--muted); font-size: 10px; }
+    .metric-sub .up { color: var(--green); }
+    .metric-sub .flat { color: var(--blue); }
+    .section-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(275px, .85fr); gap: 16px; align-items: start; }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+    .panel-head { display: flex; min-height: 53px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 15px; border-bottom: 1px solid var(--line); }
+    .panel-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+    .panel-subtitle { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
+    .panel-body { padding: 15px; }
+    .live-badge, .soft-badge, .provider-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 3px; background: var(--green-soft); color: var(--green); font-family: var(--mono); font-size: 9px; white-space: nowrap; }
+    .live-badge .status-dot { width: 6px; height: 6px; flex-basis: 6px; }
+    .soft-badge.blue { background: var(--blue-soft); color: var(--blue); }
+    .soft-badge.orange { background: var(--orange-soft); color: var(--orange); }
+    .map { position: relative; display: grid; min-height: 200px; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 12px; overflow: hidden; padding: 13px 4px; background-image: radial-gradient(#e9ede8 0.75px, transparent .75px); background-size: 13px 13px; }
+    .map-column { position: relative; z-index: 1; display: grid; justify-items: center; gap: 9px; }
+    .map-node { display: flex; width: min(150px, 100%); min-height: 49px; align-items: center; gap: 9px; padding: 8px; border: 1px solid #e4e9e2; border-radius: 5px; background: #fff; box-shadow: 0 2px 6px rgba(34, 50, 37, .04); }
+    .node-mark { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border-radius: 5px; background: var(--green-soft); color: var(--green); font-size: 12px; font-weight: 700; }
+    .node-mark.orange { background: var(--orange-soft); color: var(--orange); }
+    .node-mark.blue { background: var(--blue-soft); color: var(--blue); }
+    .node-name { overflow: hidden; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .node-detail { margin-top: 3px; overflow: hidden; color: var(--muted); font-family: var(--mono); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+    .map-lines { position: absolute; inset: 20% 5%; width: 90%; height: 60%; overflow: visible; }
+    .map-lines path { fill: none; stroke: #cbd9ce; stroke-width: 1.5; stroke-dasharray: 4 5; }
+    .map-lines circle { fill: #67a378; }
+    .map-caption { display: flex; justify-content: space-between; gap: 10px; margin-top: 11px; color: var(--muted); font-family: var(--mono); font-size: 9px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 9px 12px; color: var(--muted); font-family: var(--mono); font-size: 8px; font-weight: 400; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 11px 12px; border-top: 1px solid #edf0ec; color: #4a544b; font-size: 10px; white-space: nowrap; }
+    tbody tr:hover { background: #fafbf9; }
+    .agent-cell { display: flex; align-items: center; gap: 8px; }
+    .agent-icon { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border-radius: 5px; background: #eef3e9; color: #4d694a; font-size: 10px; font-weight: 700; }
+    .agent-name { color: var(--ink); font-size: 10px; font-weight: 700; }
+    .agent-role { margin-top: 3px; color: var(--muted); font-size: 9px; }
+    .state { display: inline-flex; align-items: center; gap: 5px; color: #4d7453; font-size: 9px; }
+    .state .status-dot { width: 6px; height: 6px; flex-basis: 6px; }
+    .state.idle { color: #9a7734; }
+    .state.idle .status-dot { background: #d5a74a; }
+    .mono { font-family: var(--mono); font-size: 9px; }
+    .row-action { border: 0; background: transparent; color: #6a756c; font-size: 17px; }
+    .row-action:hover { color: var(--ink); }
+    .memory-panel { margin-bottom: 14px; }
+    .resource { padding: 2px 0 15px; }
+    .resource + .resource { padding-top: 14px; border-top: 1px solid var(--line); }
+    .resource-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .resource-name { color: #4c564d; font-size: 10px; font-weight: 600; }
+    .resource-value { font-family: var(--mono); font-size: 10px; }
+    .resource-caption { display: flex; justify-content: space-between; margin-top: 6px; color: var(--muted); font-size: 9px; }
+    .meter { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 5px; background: #edf0eb; }
+    .meter > span { display: block; height: 100%; border-radius: inherit; background: #69a37a; transition: width .25s; }
+    .meter.orange > span { background: #d09a56; }
+    .resource-note { margin: 0 0 13px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .resource-actions { display: flex; gap: 7px; }
+    .cache-breakdown { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; padding: 11px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+    .cache-breakdown strong { color: #515b52; font-family: var(--mono); font-size: 9px; font-weight: 400; }
+    .models-panel { margin-top: 16px; scroll-margin-top: 78px; }
+    .model-controls { display: flex; align-items: center; gap: 6px; }
+    .filter-button { min-height: 26px; padding: 0 8px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--muted); font-size: 9px; }
+    .filter-button:hover { background: #f4f6f2; }
+    .filter-button.active { border-color: #dfe6dc; background: #f1f5ee; color: #416347; }
+    .provider-cell { display: flex; align-items: center; gap: 7px; color: #414b42; font-weight: 600; }
+    .provider-symbol { display: grid; width: 21px; height: 21px; place-items: center; border-radius: 4px; background: #f0f2ed; color: #47574a; font-family: var(--mono); font-size: 9px; }
+    .model-id { color: #465349; font-family: var(--mono); font-size: 9px; }
+    .context { color: #69736a; font-family: var(--mono); font-size: 9px; }
+    .activity-list { display: grid; }
+    .activity-item { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; padding: 10px 0; border-bottom: 1px solid #edf0ec; }
+    .activity-item:last-child { padding-bottom: 0; border-bottom: 0; }
+    .activity-icon { color: var(--green); font-size: 12px; }
+    .activity-copy { color: #4e584f; font-size: 9px; line-height: 1.4; }
+    .activity-time { color: #939b93; font-family: var(--mono); font-size: 8px; white-space: nowrap; }
+    .toast { position: fixed; z-index: 8; right: 22px; bottom: 20px; max-width: min(360px, calc(100vw - 32px)); padding: 12px 15px; border: 1px solid #d9e5d7; border-radius: 5px; background: #fff; box-shadow: 0 8px 24px #17251b1c; color: #395844; font-size: 11px; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    dialog { width: min(430px, calc(100% - 28px)); padding: 0; border: 1px solid var(--line); border-radius: 7px; box-shadow: 0 22px 80px #10201533; }
+    dialog::backdrop { background: #1c2821a1; backdrop-filter: blur(2px); }
+    .dialog-head { display: flex; justify-content: space-between; gap: 15px; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+    .dialog-head h2 { margin: 0; font-family: var(--display); font-size: 16px; }
+    .dialog-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .icon-button { width: 26px; height: 26px; border: 0; border-radius: 4px; background: transparent; color: var(--muted); font-size: 17px; }
+    .icon-button:hover { background: #f0f3ef; }
+    .dialog-form { display: grid; gap: 13px; padding: 17px 19px 19px; }
+    .field { display: grid; gap: 6px; }
+    .field label { color: #4f5b50; font-size: 10px; font-weight: 600; }
+    .field input, .field select { width: 100%; height: 35px; padding: 0 10px; border: 1px solid #dfe5dd; border-radius: 4px; background: #fff; color: var(--ink); font-size: 11px; }
+    .field-hint { color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 7px; padding-top: 4px; }
+    .empty-state { padding: 18px 12px; color: var(--muted); font-size: 10px; text-align: center; }
+    .paused .live-badge { background: #f2f0e9; color: #8c7442; }
+    .paused .live-badge .status-dot { background: #d1a342; }
+
+    @media (max-width: 1050px) {
+      .app { grid-template-columns: 190px minmax(0, 1fr); }
+      .content { padding-right: 22px; padding-left: 22px; }
+      .topbar { padding-right: 22px; padding-left: 22px; }
+      .section-grid { grid-template-columns: minmax(0, 1.35fr) minmax(245px, .8fr); gap: 12px; }
+    }
+    @media (max-width: 780px) {
+      .app { display: block; }
+      .sidebar { position: sticky; z-index: 5; top: 0; display: block; width: 100%; height: auto; padding: 9px 14px; }
+      .brand { padding: 0 2px 9px; font-size: 14px; }
+      .brand-mark { width: 26px; height: 26px; }
+      .brand small, .nav-label, .sidebar-spacer, .workspace-card, .account { display: none; }
+      .nav { display: flex; overflow-x: auto; gap: 3px; padding-bottom: 1px; scrollbar-width: none; }
+      .nav::-webkit-scrollbar { display: none; }
+      .nav a { min-height: 32px; flex: 0 0 auto; gap: 7px; padding: 0 9px; font-size: 10px; }
+      .nav-icon { width: auto; font-size: 13px; }
+      .topbar { position: relative; height: 48px; padding: 0 16px; }
+      .content { padding: 17px 14px 30px; }
+      .section-grid { grid-template-columns: 1fr; }
+      .resource-panel { display: grid; grid-template-columns: 1fr 1fr; }
+      .resource-panel .panel-head { grid-column: 1 / -1; }
+      .resource-panel .panel-body { grid-column: 1 / -1; }
+      .heading-row { align-items: flex-start; }
+      .heading-actions .button { padding: 0 9px; }
+    }
+    @media (max-width: 520px) {
+      .topbar { gap: 8px; }
+      .top-actions { gap: 0; }
+      .top-meta { display: none; }
+      .search { width: 130px; }
+      .content { padding-right: 11px; padding-left: 11px; }
+      .demo-banner { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .heading-row { flex-direction: column; gap: 12px; }
+      .heading-actions { width: 100%; }
+      .heading-actions .button { flex: 1; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric { padding: 12px; }
+      .metric:nth-child(3) { border-top: 1px solid var(--line); border-left: 0; }
+      .metric:nth-child(4) { border-top: 1px solid var(--line); }
+      .metric-value { font-size: 20px; }
+      .map { min-height: 175px; gap: 5px; }
+      .map-node { width: 100%; min-height: 45px; gap: 5px; padding: 6px 5px; }
+      .node-mark { width: 21px; height: 21px; flex-basis: 21px; }
+      .node-name { font-size: 9px; }
+      .node-detail { font-size: 7px; }
+      .panel-head { padding-right: 11px; padding-left: 11px; }
+      .panel-body { padding: 11px; }
+      .model-controls { gap: 0; }
+      .filter-button { padding: 0 5px; }
+      .demo-note { font-size: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">c</span><span>conductor<small>AGENT OPERATIONS</small></span></div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav">
+        <a class="active" href="#overview" data-nav="overview"><span class="nav-icon" aria-hidden="true">&#9638;</span>Overview</a>
+        <a href="#agents" data-nav="agents"><span class="nav-icon" aria-hidden="true">&#9678;</span>Agents<span class="nav-count" id="agent-nav-count">4</span></a>
+        <a href="#memory" data-nav="memory"><span class="nav-icon" aria-hidden="true">&#9633;</span>Memory &amp; cache</a>
+        <a href="#models" data-nav="models"><span class="nav-icon" aria-hidden="true">&#10038;</span>Models</a>
+        <a href="#activity" data-nav="activity"><span class="nav-icon" aria-hidden="true">&#9776;</span>Activity</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="workspace-card">
+        <div class="eyebrow">Current workspace</div>
+        <div class="workspace-title">Research &amp; Synthesis</div>
+        <div class="workspace-foot"><strong>●</strong> Local demo environment</div>
+      </div>
+      <div class="account"><div class="avatar">OP</div><div><div class="account-name">Workspace operator</div><div class="account-role">Administrator</div></div></div>
+    </aside>
+
+    <main class="main" id="overview">
+      <header class="topbar">
+        <div class="breadcrumb">Workspace <span aria-hidden="true">/</span> <strong id="breadcrumb-page">Overview</strong></div>
+        <div class="top-actions">
+          <label class="search-wrap"><span aria-hidden="true">&#9906;</span><input id="global-search" class="search" type="search" placeholder="Search agents, models..." aria-label="Search agents and models"></label>
+          <div class="top-meta">MON, NOV 02</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="demo-banner"><div class="demo-label"><span class="demo-dot"></span><strong>Local demo</strong><span>Illustrative data and controls</span></div><div class="demo-note">Connect a provider endpoint to wire this UI to a live model backend.</div></div>
+        <section class="heading-row" aria-labelledby="page-title">
+          <div><div class="eyebrow">Workspace / Research &amp; Synthesis</div><h1 id="page-title">Agent operations</h1><div class="subtitle">Coordinate workloads, memory, and model providers from one control room.</div></div>
+          <div class="heading-actions"><button class="button" id="pause-button" type="button"><span aria-hidden="true">&#9646;&#9646;</span> Pause orchestration</button><button class="button primary" id="deploy-button" type="button"><span aria-hidden="true">+</span> Deploy agent</button></div>
+        </section>
+
+        <section class="metrics" aria-label="Workspace metrics">
+          <div class="metric"><div class="metric-label">Agents online <span class="soft-badge">HEALTHY</span></div><div class="metric-value" id="online-metric">4<span style="color:#89928a;font-size:13px;font-weight:500"> / 4</span></div><div class="metric-sub"><span class="up">+1</span> agent added this week</div></div>
+          <div class="metric"><div class="metric-label">Tasks in flight <span class="soft-badge blue">QUEUE</span></div><div class="metric-value" id="tasks-metric">12</div><div class="metric-sub"><span class="flat">3 queued</span> across 4 agents</div></div>
+          <div class="metric"><div class="metric-label">Tokens / min <span class="soft-badge blue">THROUGHPUT</span></div><div class="metric-value" id="tokens-metric">8.4k</div><div class="metric-sub"><span class="up">+12.6%</span> vs. previous hour</div></div>
+          <div class="metric"><div class="metric-label">Cache hit rate <span class="soft-badge orange">LAST 24H</span></div><div class="metric-value" id="cache-metric">78.2%</div><div class="metric-sub"><span class="up">+3.1%</span> from last day</div></div>
+        </section>
+
+        <div class="section-grid">
+          <section class="panel" aria-labelledby="map-title">
+            <div class="panel-head"><div><div class="panel-title" id="map-title">Orchestration map</div><div class="panel-subtitle">Agent routes and shared model access</div></div><span class="live-badge" id="orchestra-status"><span class="status-dot"></span> RUNNING</span></div>
+            <div class="panel-body">
+              <div class="map" aria-label="Four agents route through the shared orchestrator to connected model providers">
+                <svg class="map-lines" viewBox="0 0 600 150" preserveAspectRatio="none" aria-hidden="true"><path d="M130 25 C220 25 210 75 295 75 M130 75 C220 75 220 75 295 75 M130 125 C220 125 210 75 295 75 M305 75 C390 75 380 25 470 25 M305 75 C390 75 380 75 470 75 M305 75 C390 75 380 125 470 125"/><circle cx="295" cy="75" r="4"/><circle cx="130" cy="25" r="3"/><circle cx="130" cy="75" r="3"/><circle cx="130" cy="125" r="3"/><circle cx="470" cy="25" r="3"/><circle cx="470" cy="75" r="3"/><circle cx="470" cy="125" r="3"/></svg>
+                <div class="map-column" id="map-agents"></div>
+                <div class="map-column"><div class="map-node" style="width:138px;border-color:#cfe0d1"><span class="node-mark">&#8644;</span><span><span class="node-name">Orchestrator</span><span class="node-detail">ROUTING + MEMORY</span></span></div></div>
+                <div class="map-column" id="map-providers"></div>
+              </div>
+              <div class="map-caption"><span><span class="demo-dot" style="display:inline-block;vertical-align:-1px;margin-right:5px"></span>ROUTING ACTIVE</span><span id="route-caption">4 agents &middot; 3 providers &middot; shared cache</span></div>
+            </div>
+          </section>
+
+          <section class="panel resource-panel" id="memory" aria-labelledby="memory-title">
+            <div class="panel-head"><div><div class="panel-title" id="memory-title">Memory &amp; cache</div><div class="panel-subtitle">Shared workspace resources</div></div><span class="soft-badge blue">STORAGE</span></div>
+            <div class="panel-body">
+              <div class="resource">
+                <div class="resource-head"><span class="resource-name">Working memory</span><span class="resource-value" id="memory-value">6.8 / 12 GB</span></div>
+                <div class="meter"><span id="memory-meter" style="width:57%"></span></div>
+                <div class="resource-caption"><span>57% allocated</span><span>Limit 12 GB</span></div>
+              </div>
+              <div class="resource">
+                <div class="resource-head"><span class="resource-name">Persistent storage</span><span class="resource-value">24.6 / 80 GB</span></div>
+                <div class="meter orange"><span style="width:31%"></span></div>
+                <div class="resource-caption"><span>31% used</span><span>Local snapshot store</span></div>
+              </div>
+              <div class="resource">
+                <div class="resource-head"><span class="resource-name">Semantic cache</span><span class="resource-value" id="cache-value">3.2 GB</span></div>
+                <div class="meter"><span id="cache-meter" style="width:64%"></span></div>
+                <div class="resource-caption"><span id="cache-entries">18,420 entries</span><span>5 GB max</span></div>
+              </div>
+              <p class="resource-note">Cache eviction uses least-recently-used entries. Memory snapshots preserve agent context before compaction.</p>
+              <div class="resource-actions"><button class="button small" id="snapshot-button" type="button">&#8595; Snapshot memory</button><button class="button small danger" id="clear-cache-button" type="button">&#8635; Clear cache</button></div>
+              <div class="cache-breakdown"><span>Cache policy</span><strong>LRU · 24h TTL</strong><span>Snapshots created</span><strong id="snapshot-count">08</strong><span>Last snapshot</span><strong id="snapshot-time">09:42:16</strong></div>
+            </div>
+          </section>
+
+          <section class="panel" id="agents" aria-labelledby="agents-title">
+            <div class="panel-head"><div><div class="panel-title" id="agents-title">Agent roster</div><div class="panel-subtitle">Live workloads and assigned models</div></div><button class="button small" type="button" id="roster-deploy">+ Add agent</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Agent</th><th>Status</th><th>Model</th><th>Memory</th><th>Load</th><th></th></tr></thead><tbody id="agent-rows"></tbody></table></div>
+          </section>
+
+          <section class="panel" id="activity" aria-labelledby="activity-title">
+            <div class="panel-head"><div><div class="panel-title" id="activity-title">Recent activity</div><div class="panel-subtitle">Workspace events</div></div><span class="soft-badge blue">AUDIT LOG</span></div>
+            <div class="panel-body"><div class="activity-list" id="activity-list"></div></div>
+          </section>
+        </div>
+
+        <section class="panel models-panel" id="models" aria-labelledby="models-title">
+          <div class="panel-head"><div><div class="panel-title" id="models-title">Model registry</div><div class="panel-subtitle">One routing layer for hosted, open-weight, and custom models</div></div><div class="model-controls"><div class="filter-group" role="group" aria-label="Filter models"><button class="filter-button active" data-filter="all" type="button">All</button><button class="filter-button" data-filter="hosted" type="button">Hosted</button><button class="filter-button" data-filter="custom" type="button">Custom</button></div><button class="button small" id="provider-button" type="button">+ Connect provider</button></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Model</th><th>Provider</th><th>Class</th><th>Context</th><th>Routing</th><th></th></tr></thead><tbody id="model-rows"></tbody></table></div>
+          <div id="model-empty" class="empty-state" hidden>No models match this filter. Connect a provider endpoint to add one.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="agent-dialog" aria-labelledby="agent-dialog-title">
+    <div class="dialog-head"><div><h2 id="agent-dialog-title">Deploy an agent</h2><p>Add a worker to this orchestration workspace.</p></div><button class="icon-button" type="button" data-close="agent-dialog" aria-label="Close dialog">&#10005;</button></div>
+    <form class="dialog-form" id="agent-form">
+      <div class="field"><label for="agent-name-input">Agent name</label><input id="agent-name-input" name="name" required maxlength="32" placeholder="e.g. Data analyst"></div>
+      <div class="field"><label for="agent-role-input">Role</label><input id="agent-role-input" name="role" required maxlength="48" placeholder="e.g. Analyze incoming reports"></div>
+      <div class="field"><label for="agent-model-input">Model route</label><select id="agent-model-input" name="model"></select></div>
+      <div class="dialog-actions"><button class="button" type="button" data-close="agent-dialog">Cancel</button><button class="button primary" type="submit">Deploy agent</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="provider-dialog" aria-labelledby="provider-dialog-title">
+    <div class="dialog-head"><div><h2 id="provider-dialog-title">Connect a model endpoint</h2><p>Add a provider adapter or OpenAI-compatible API.</p></div><button class="icon-button" type="button" data-close="provider-dialog" aria-label="Close dialog">&#10005;</button></div>
+    <form class="dialog-form" id="provider-form">
+      <div class="field"><label for="provider-name-input">Provider name</label><input id="provider-name-input" name="name" required maxlength="32" placeholder="e.g. My inference server"></div>
+      <div class="field"><label for="provider-model-input">Model ID</label><input id="provider-model-input" name="model" required maxlength="64" placeholder="e.g. qwen2.5:14b"></div>
+      <div class="field"><label for="provider-endpoint-input">Base URL</label><input id="provider-endpoint-input" name="endpoint" type="url" required placeholder="https://api.example.com/v1"></div>
+      <div class="field"><label for="provider-protocol-input">API protocol</label><select id="provider-protocol-input" name="protocol"><option>OpenAI-compatible</option><option>Anthropic-compatible adapter</option><option>Custom adapter</option></select><div class="field-hint">This prototype records the endpoint locally; it does not transmit credentials or make API calls. Connect a backend adapter to enable inference.</div></div>
+      <div class="dialog-actions"><button class="button" type="button" data-close="provider-dialog">Cancel</button><button class="button primary" type="submit">Add endpoint</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const agents = [
+      { name: 'Researcher', role: 'Source discovery', model: 'Claude 3.7 Sonnet', memory: '1.8 GB', load: 68, state: 'Working', mark: 'R' },
+      { name: 'Synthesizer', role: 'Summarize findings', model: 'GPT-4.1', memory: '2.1 GB', load: 42, state: 'Working', mark: 'S' },
+      { name: 'Fact checker', role: 'Evidence validation', model: 'Gemini 2.5 Pro', memory: '1.6 GB', load: 31, state: 'Working', mark: 'F' },
+      { name: 'Coordinator', role: 'Task routing', model: 'Claude 3.7 Sonnet', memory: '1.3 GB', load: 17, state: 'Idle', mark: 'C' }
+    ];
+    const models = [
+      { name: 'Claude 3.7 Sonnet', provider: 'Anthropic', kind: 'hosted', className: 'Reasoning', context: '200k', route: 'Connected', symbol: 'A' },
+      { name: 'GPT-4.1', provider: 'OpenAI', kind: 'hosted', className: 'General', context: '1.0M', route: 'Connected', symbol: 'O' },
+      { name: 'Gemini 2.5 Pro', provider: 'Google', kind: 'hosted', className: 'Reasoning', context: '1.0M', route: 'Connected', symbol: 'G' },
+      { name: 'Llama 3.3 70B', provider: 'Local runtime', kind: 'custom', className: 'Open-weight', context: '128k', route: 'Connected', symbol: 'L' },
+      { name: 'DeepSeek R1', provider: 'DeepSeek', kind: 'hosted', className: 'Reasoning', context: '64k', route: 'Connected', symbol: 'D' }
+    ];
+    const activity = [
+      { icon: '&#10003;', text: 'Cache hit served a Researcher context lookup', time: '10:14:32' },
+      { icon: '&#8644;', text: 'Coordinator routed 3 tasks to Synthesizer', time: '10:12:07' },
+      { icon: '&#9633;', text: 'Memory snapshot saved to local store', time: '09:42:16' }
+    ];
+    let activeFilter = 'all';
+    let defaultModel = 'Claude 3.7 Sonnet';
+    let isPaused = false;
+    let cacheCleared = false;
+    let snapshotCount = 8;
+    let toastTimer;
+
+    const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    const initials = (value) => value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+    const showToast = (message) => {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('visible'), 2800);
+    };
+
+    function renderAgents(query = '') {
+      const normalizedQuery = query.toLowerCase();
+      const visibleAgents = agents.filter((agent) => `${agent.name} ${agent.role} ${agent.model}`.toLowerCase().includes(normalizedQuery));
+      document.getElementById('agent-rows').innerHTML = visibleAgents.length ? visibleAgents.map((agent) => `
+        <tr><td><div class="agent-cell"><span class="agent-icon">${escapeHTML(agent.mark)}</span><span><span class="agent-name">${escapeHTML(agent.name)}</span><span class="agent-role">${escapeHTML(agent.role)}</span></span></div></td>
+        <td><span class="state ${agent.state === 'Idle' || isPaused ? 'idle' : ''}"><span class="status-dot"></span>${isPaused ? 'Paused' : escapeHTML(agent.state)}</span></td><td>${escapeHTML(agent.model)}</td><td class="mono">${escapeHTML(agent.memory)}</td><td class="mono">${agent.load}%</td><td><button class="row-action" type="button" data-agent="${escapeHTML(agent.name)}" aria-label="Remove ${escapeHTML(agent.name)}">&times;</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty-state">No agents match your search.</td></tr>';
+      document.getElementById('agent-nav-count').textContent = agents.length;
+      document.getElementById('online-metric').innerHTML = `${isPaused ? 0 : agents.length}<span style="color:#89928a;font-size:13px;font-weight:500"> / ${agents.length}</span>`;
+      document.getElementById('route-caption').textContent = `${agents.length} agents · ${models.length > 0 ? new Set(models.map((model) => model.provider)).size : 0} providers · shared cache`;
+      document.getElementById('map-agents').innerHTML = agents.slice(0, 3).map((agent, index) => `<div class="map-node"><span class="node-mark ${index === 1 ? 'orange' : ''}">${escapeHTML(agent.mark)}</span><span><span class="node-name">${escapeHTML(agent.name)}</span><span class="node-detail">${isPaused ? 'PAUSED' : escapeHTML(agent.state.toUpperCase())}</span></span></div>`).join('');
+      document.getElementById('map-providers').innerHTML = [...new Set(models.map((model) => model.provider))].slice(0, 3).map((provider, index) => `<div class="map-node"><span class="node-mark ${index === 1 ? 'blue' : index === 2 ? 'orange' : ''}">${escapeHTML(initials(provider))}</span><span><span class="node-name">${escapeHTML(provider)}</span><span class="node-detail">MODEL ROUTE</span></span></div>`).join('');
+    }
+
+    function renderModels(query = '') {
+      const normalizedQuery = query.toLowerCase();
+      const visibleModels = models.filter((model) => (activeFilter === 'all' || model.kind === activeFilter) && `${model.name} ${model.provider} ${model.className}`.toLowerCase().includes(normalizedQuery));
+      document.getElementById('model-rows').innerHTML = visibleModels.map((model) => `<tr><td class="model-id">${escapeHTML(model.name)}</td><td><span class="provider-cell"><span class="provider-symbol">${escapeHTML(model.symbol || initials(model.provider))}</span>${escapeHTML(model.provider)}</span></td><td><span class="provider-tag ${model.kind === 'custom' ? 'soft-badge blue' : ''}">${escapeHTML(model.className)}</span></td><td class="context">${escapeHTML(model.context)}</td><td><span class="state"><span class="status-dot"></span>${model.name === defaultModel ? 'Default route' : escapeHTML(model.route)}</span></td><td><button class="row-action route-button" data-model="${escapeHTML(model.name)}" type="button" aria-pressed="${model.name === defaultModel}" aria-label="Set ${escapeHTML(model.name)} as default route">${model.name === defaultModel ? '&#10003;' : '&#8594;'}</button></td></tr>`).join('');
+      document.getElementById('model-empty').hidden = visibleModels.length > 0;
+      document.querySelectorAll('#agent-model-input option').forEach((option) => option.remove());
+      models.forEach((model) => document.getElementById('agent-model-input').add(new Option(model.name, model.name)));
+      document.getElementById('agent-model-input').value = defaultModel;
+      document.getElementById('route-caption').textContent = `${agents.length} agents · ${new Set(models.map((model) => model.provider)).size} providers · shared cache`;
+    }
+
+    function renderActivity() {
+      document.getElementById('activity-list').innerHTML = activity.slice(0, 5).map((event) => `<div class="activity-item"><span class="activity-icon">${event.icon}</span><span class="activity-copy">${escapeHTML(event.text)}</span><span class="activity-time">${escapeHTML(event.time)}</span></div>`).join('');
+    }
+
+    function addActivity(text, icon = '&#10003;') {
+      activity.unshift({ icon, text, time: new Date().toLocaleTimeString('en-GB', { hour12: false }) });
+      renderActivity();
+    }
+
+    function openDialog(id) { document.getElementById(id).showModal(); }
+    document.getElementById('deploy-button').addEventListener('click', () => openDialog('agent-dialog'));
+    document.getElementById('roster-deploy').addEventListener('click', () => openDialog('agent-dialog'));
+    document.getElementById('provider-button').addEventListener('click', () => openDialog('provider-dialog'));
+    document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.close).close()));
+
+    document.getElementById('agent-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const name = form.get('name').trim();
+      if (agents.some((agent) => agent.name.toLowerCase() === name.toLowerCase())) {
+        showToast('An agent with that name already exists.');
+        return;
+      }
+      agents.push({ name, role: form.get('role').trim(), model: form.get('model'), memory: '0.4 GB', load: 0, state: 'Idle', mark: initials(name) });
+      renderAgents(document.getElementById('global-search').value);
+      addActivity(`${name} agent deployed to the workspace`);
+      event.currentTarget.reset();
+      document.getElementById('agent-dialog').close();
+      showToast(`${name} is ready in the orchestration roster.`);
+    });
+
+    document.getElementById('provider-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const provider = form.get('name').trim();
+      const modelName = form.get('model').trim();
+      const endpoint = form.get('endpoint').trim();
+      if (models.some((model) => model.provider.toLowerCase() === provider.toLowerCase() && model.name.toLowerCase() === modelName.toLowerCase())) {
+        showToast('That model is already registered for this provider.');
+        return;
+      }
+      const protocol = form.get('protocol');
+      models.push({ name: modelName, provider, kind: 'custom', className: protocol, context: 'Configurable', route: 'Configured', symbol: initials(provider), endpoint });
+      renderModels(document.getElementById('global-search').value);
+      renderAgents(document.getElementById('global-search').value);
+      addActivity(`${provider} / ${modelName} endpoint configured (${new URL(endpoint).host})`, '&#8644;');
+      event.currentTarget.reset();
+      document.getElementById('provider-dialog').close();
+      showToast(`${provider} / ${modelName} saved locally. Connect a backend adapter to enable inference.`);
+    });
+
+    document.getElementById('pause-button').addEventListener('click', (event) => {
+      isPaused = !isPaused;
+      document.getElementById('app').classList.toggle('paused', isPaused);
+      event.currentTarget.innerHTML = isPaused ? '<span aria-hidden="true">&#9654;</span> Resume orchestration' : '<span aria-hidden="true">&#9646;&#9646;</span> Pause orchestration';
+      document.getElementById('orchestra-status').innerHTML = `<span class="status-dot"></span> ${isPaused ? 'PAUSED' : 'RUNNING'}`;
+      renderAgents(document.getElementById('global-search').value);
+      addActivity(`Orchestration ${isPaused ? 'paused' : 'resumed'}`, isPaused ? '&#9646;&#9646;' : '&#9654;');
+      showToast(`Orchestration ${isPaused ? 'paused' : 'resumed'}.`);
+    });
+
+    document.getElementById('clear-cache-button').addEventListener('click', () => {
+      cacheCleared = !cacheCleared;
+      document.getElementById('cache-value').textContent = cacheCleared ? '0.0 GB' : '3.2 GB';
+      document.getElementById('cache-entries').textContent = cacheCleared ? '0 entries' : '18,420 entries';
+      document.getElementById('cache-meter').style.width = cacheCleared ? '0%' : '64%';
+      document.getElementById('cache-metric').textContent = cacheCleared ? '0.0%' : '78.2%';
+      addActivity(cacheCleared ? 'Semantic cache cleared by operator' : 'Demo cache values restored', '&#8635;');
+      showToast(cacheCleared ? 'Demo cache cleared. Cache hit rate reset.' : 'Demo cache values restored.');
+    });
+
+    document.getElementById('snapshot-button').addEventListener('click', () => {
+      snapshotCount += 1;
+      document.getElementById('snapshot-count').textContent = String(snapshotCount).padStart(2, '0');
+      document.getElementById('snapshot-time').textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+      addActivity('Memory snapshot saved to local demo store', '&#9633;');
+      showToast('Demo memory snapshot saved. No agent context was transmitted.');
+    });
+
+    document.querySelectorAll('.filter-button').forEach((button) => button.addEventListener('click', () => {
+      activeFilter = button.dataset.filter;
+      document.querySelectorAll('.filter-button').forEach((item) => item.classList.toggle('active', item === button));
+      renderModels(document.getElementById('global-search').value);
+    }));
+
+    document.getElementById('global-search').addEventListener('input', (event) => {
+      renderAgents(event.target.value);
+      renderModels(event.target.value);
+    });
+
+    document.getElementById('agent-rows').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-agent]');
+      if (!button) return;
+      const index = agents.findIndex((agent) => agent.name === button.dataset.agent);
+      if (index < 0) return;
+      const [removed] = agents.splice(index, 1);
+      renderAgents(document.getElementById('global-search').value);
+      addActivity(`${removed.name} removed from the workspace`, '&#8722;');
+      showToast(`${removed.name} removed from the roster.`);
+    });
+
+    document.getElementById('model-rows').addEventListener('click', (event) => {
+      const button = event.target.closest('.route-button');
+      if (!button) return;
+      defaultModel = button.dataset.model;
+      document.getElementById('agent-model-input').value = defaultModel;
+      renderModels(document.getElementById('global-search').value);
+      showToast(`${defaultModel} is now the default route for new agents.`);
+    });
+
+    document.querySelectorAll('[data-nav]').forEach((link) => link.addEventListener('click', () => {
+      document.querySelectorAll('[data-nav]').forEach((item) => item.classList.toggle('active', item === link));
+      document.getElementById('breadcrumb-page').textContent = link.textContent.trim().replace(/\d+$/, '');
+    }));
+
+    renderAgents();
+    renderModels();
+    renderActivity();
+  </script>
+</body>
+</html>
